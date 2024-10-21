@@ -37,7 +37,7 @@ includedirs({ "`pkg-config --cflags glfw3`" })
 filter("action:vs2022")
 defines({ "WINDOWS" })
 buildoptions({ "/std:c++17" })
-links({ "opengl32.lib", "glew32s.lib", "glfw3.lib" })
+links({ "opengl32.lib", "glfw3.lib" })
 includedirs({ "deps/glfw/include", "src" })
 libdirs({ "deps/glfw/lib" })
 
