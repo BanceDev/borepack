@@ -8,7 +8,7 @@ language("C++")
 targetdir("bin/%{cfg.buildcfg}")
 
 -- Common include directories
-includedirs({ "deps/glad/include", "deps/glm" })
+includedirs({ "deps/glad/include" })
 
 -- Common files
 files({
