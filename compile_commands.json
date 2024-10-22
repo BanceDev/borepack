@@ -5,6 +5,7 @@
       "-DDEBUG",
       "-DLINUX",
       "-Ideps/glad/include",
+      "-Ideps/glm",
       "-I",
       "-m64",
       "-g",
@@ -14,33 +15,11 @@
       "-Wformat",
       "-c",
       "-o",
-      "obj/Debug/glad.o",
-      "deps/glad/src/glad.cpp"
+      "obj/Debug/bsp.o",
+      "src/bsp.cpp"
     ],
-    "directory": "/home/lanceb/block",
-    "file": "/home/lanceb/block/deps/glad/src/glad.cpp",
-    "output": "/home/lanceb/block/obj/Debug/glad.o"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-DDEBUG",
-      "-DLINUX",
-      "-Ideps/glad/include",
-      "-I",
-      "-m64",
-      "-g",
-      "-std=c++17",
-      "-g",
-      "-Wall",
-      "-Wformat",
-      "-c",
-      "-o",
-      "obj/Debug/main.o",
-      "src/main.cpp"
-    ],
-    "directory": "/home/lanceb/block",
-    "file": "/home/lanceb/block/src/main.cpp",
-    "output": "/home/lanceb/block/obj/Debug/main.o"
+    "directory": "/home/lanceb/borepack",
+    "file": "/home/lanceb/borepack/src/bsp.cpp",
+    "output": "/home/lanceb/borepack/obj/Debug/bsp.o"
   }
 ]
