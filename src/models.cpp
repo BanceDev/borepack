@@ -1,5 +1,7 @@
 #include "models.h"
 #include <cstdlib>
+#include "ext/matrix_transform.hpp"
+#include "fwd.hpp"
 #include "glad/glad.h"
 
 void UploadMesh(mesh* m, bool dynamic) {
@@ -49,12 +51,7 @@ map_model LoadMapModelFromMesh(mesh input_mesh) {
     model.meshes[0] = input_mesh;
 
     // Initialize the transform matrix to an identity matrix
-    model.transform = matrix{
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
+    model.transform = glm::mat4(1.0f);
 
     return model;
 }

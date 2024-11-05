@@ -1,18 +1,21 @@
+#include "fwd.hpp"
 #include "glm.hpp"
 #include "ext/vector_float3.hpp"
 #include "ext/vector_int3_sized.hpp"
+#include <cstdint>
 
 //==================================================
 // ENGINE STRUCTS
 //==================================================
 
 typedef struct color {
-    unsigned char r;        // Color red value
-    unsigned char g;        // Color green value
-    unsigned char b;        // Color blue value
-    unsigned char a;        // Color alpha value
+    uint8_t r;        // Color red value
+    uint8_t g;        // Color green value
+    uint8_t b;        // Color blue value
+    uint8_t a;        // Color alpha value
 } color;
 
+// TODO: remove anything that uses this and replace with glm::mat4
 // Matrix, 4x4 components, column major, OpenGL style, right-handed
 typedef struct matrix {
     float m0, m4, m8, m12;  // Matrix first row (4 components)
@@ -33,7 +36,8 @@ typedef struct mesh {
     float *tangents;        // Vertex tangents (XYZW - 4 components per vertex) (shader-location = 4)
     unsigned char *colors;      // Vertex colors (RGBA - 4 components per vertex) (shader-location = 3)
     unsigned short *indices;    // Vertex indices (in case vertex data comes indexed)
-
+    
+    // NOTE: I stole this from another codebase as a reference idk if we will do animations like this or not
     // Animation vertex data
     float *animVertices;    // Animated vertex positions (after bones transformations)
     float *animNormals;     // Animated normals (after bones transformations)
@@ -57,7 +61,7 @@ typedef struct texture {
 } texture;
 
 typedef struct map_model {
-    matrix transform;       // Local transform matrix
+    glm::mat4 transform;
 
     int meshCount;          // Number of meshes
     int textureCount;       // Number of textures
