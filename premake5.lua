@@ -28,18 +28,17 @@ optimize("On")
 -- Linux-specific setup
 filter("action:gmake")
 defines({ "LINUX" })
-buildoptions({ "-std=c++20", "-g", "-Wall", "-Wformat" })
-links({ "GL", "glfw" })
-linkoptions({ "`pkg-config --static --libs glfw3`" })
-includedirs({ "`pkg-config --cflags glfw3`" })
+buildoptions({ "-std=c++20", "-g", "-Wall", "-Wformat", "`sdl2-config --cflags`" })
+links({ "GL", "GLU", "SDL2" })
 
 -- Windows-specific setup for Visual Studio
+-- probably will dynamically link SDL2 in the future
 filter("action:vs2022")
 defines({ "WINDOWS" })
 buildoptions({ "/std:c++20" })
-links({ "opengl32.lib", "glfw3.lib" })
-includedirs({ "deps/glfw/include", "src" })
-libdirs({ "deps/glfw/lib" })
+links({ "opengl32.lib", "glu32.lib", "SDL2.lib", "SDL2main.lib" })
+includedirs({ "deps/SDL2/include", "src" })
+libdirs({ "deps/SDL2/lib" })
 
 -- Reset filters to avoid affecting other projects
 filter({})
