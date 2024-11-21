@@ -1,6 +1,6 @@
 #include "glad/glad.h"
 #include <iostream>
-#include <string.h> // strncmp
+#include <string_view>
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
 #include "world.h"
@@ -95,9 +95,23 @@ bool World::Initialize(Map *map, int width, int height)
             FragColor = texture(texture1, TexCoord);
         })";
 	shaderProgram = LoadShader(vertexShaderSource, fragmentShaderSource);
-	
+		
+	// TODO: move this shit to some kind of player config later
+	float fov = 90.0f;        // Field of view in degrees (vertical)
+	float nearPlane = 4.0f;    // Near clipping plane
+	float farPlane = 4096.0f;  // Far clipping plane
+	float aspectRatio = 1.33f; // Assuming a 4:3 aspect ratio
+
+	// Convert FOV to radians
+	float fovRad = glm::radians(fov);
+
+	// Calculate the projection matrix using glm::frustum
+	float tangent = tan(fovRad / 2.0f);
+	float view_height = nearPlane * tangent; // Half the height of the near plane
+	float view_width = view_height * aspectRatio; // Half the width of the near plane
+
+	glm::mat4 projection = glm::frustum(-view_width, view_width, -view_height, view_height, nearPlane, farPlane);
 	// projection and view matrices
-	glm::mat4 projection = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 5000.0f);
 	
 	glUseProgram(shaderProgram);
 	GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -257,12 +271,16 @@ bool World::InitializeTextures(void)
 	int numSkyTextures = 0;
 
 	// Loop through all textures to count animations and sky textures
-	for (int i = 0; i < map->getNumTextures(); i++) {
+	for (int i = 0; i < map->getNumTextures(); ++i) {
 		// Point to the stored mipmaps
-		miptex_t *mipTexture = map->getMipTexture(i);
-		if (strncmp(mipTexture->name, "*", 1) == 0) {
+		miptex_t* mipTexture = map->getMipTexture(i);
+
+		// Convert name to std::string_view for safer and easier substring comparison
+		std::string_view name(mipTexture->name);
+
+		if (name.starts_with('*')) {
 			numAnimTextues++;
-		} else if (strncmp(mipTexture->name, "sky", 3) == 0) {
+		} else if (name.starts_with("sky")) {
 			numSkyTextures++;
 		}
 	}

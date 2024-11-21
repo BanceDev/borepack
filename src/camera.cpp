@@ -1,5 +1,7 @@
-#include <math.h> // cos, sin, fabs, M_PI
 #include "camera.h"
+#include "common.hpp"
+#include "ext/scalar_constants.hpp"
+#include "glm.hpp"
 
 #define WALKING_SPEED		5.0
 #define TURN_SPEED			3.0
@@ -27,22 +29,22 @@ Camera::Camera()
 void Camera::UpdatePosition(void)
 {
 	// Move the camera forward
-	if ((fabs(speed) > 0)) {
-		head[0] += speed * cos(yaw * M_PI / 180.0);
-		head[1] += speed * sin(yaw * M_PI / 180.0);
-		head[2] += speed * sin(pitch * M_PI / 180.0);
+	if ((glm::abs(speed) > 0)) {
+		head[0] += speed * glm::cos(yaw * glm::pi<float>() / 180.0);
+		head[1] += speed * glm::sin(yaw * glm::pi<float>() / 180.0);
+		head[2] += speed * glm::sin(pitch * glm::pi<float>() / 180.0);
 	}
 
 	// Move the camera sideways
-	if ((fabs(strafe) > 0)) {
-		head[0] += strafe * sin(yaw * M_PI / 180.0);
-		head[1] -= strafe * cos(yaw * M_PI / 180.0);
+	if ((glm::abs(strafe) > 0)) {
+		head[0] += strafe * glm::sin(yaw * glm::pi<float>() / 180.0);
+		head[1] -= strafe * glm::cos(yaw * glm::pi<float>() / 180.0);
 	}
 
 	// Setup the view vector
-	view[0] = cos(yaw * M_PI / 180.0);
-	view[1] = sin(yaw * M_PI / 180.0);
-	view[2] = sin(pitch * M_PI / 180.0);
+	view[0] = glm::cos(yaw * glm::pi<float>() / 180.0);
+	view[1] = glm::sin(yaw * glm::pi<float>() / 180.0);
+	view[2] = glm::sin(pitch * glm::pi<float>() / 180.0);
 
 	// Reset speed
 	speed = 0;

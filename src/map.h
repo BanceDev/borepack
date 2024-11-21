@@ -1,8 +1,8 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
-#include <stdlib.h> // free
 #include <unordered_map>
+#include <cstdlib>
 #include "glad/glad.h"
 
 #define BSP_VERSION		29
