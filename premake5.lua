@@ -29,7 +29,7 @@ optimize("On")
 filter("action:gmake")
 defines({ "LINUX" })
 buildoptions({ "-std=c++20", "-g", "-Wall", "-Wformat", "`sdl2-config --cflags`" })
-links({ "GL", "GLU", "SDL2" })
+links({ "GL", "SDL2" })
 
 -- Windows-specific setup for Visual Studio
 -- probably will dynamically link SDL2 in the future

@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <getopt.h> // getopt_long
+#include "glad/glad.h"
 #include "map.h"
 #include "world.h"
 #include "camera.h"
@@ -152,6 +153,10 @@ int main(int argc, char *argv[])
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetSwapInterval(1);
 
+	if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
+		printf("[ERROR] Failed to initialize GLAD\n");
+		return -1;
+	}
 	// Initialize world
 	if (!world.Initialize(&map, dm.w, dm.h)) {
 		printf("[ERROR] Quake::main() Unable to initialize world\n");

@@ -1,7 +1,57 @@
-#include <GL/glu.h>
+#include "glad/glad.h"
+#include <iostream>
 #include <string.h> // strncmp
+#include "glm.hpp"
+#include "gtc/matrix_transform.hpp"
 #include "world.h"
 #include "camera.h"
+#include "map.h"
+
+GLuint shaderProgram;
+
+GLuint LoadShader(const char *vert, const char *frag) {
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vert, NULL);
+	glCompileShader(vertexShader);
+
+	GLint success;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		GLchar infoLog[512];
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cerr << "Vertex Shader Compilation Error: " << infoLog << std::endl;
+		return 0;
+	}
+
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &frag, NULL);
+	glCompileShader(fragmentShader);
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		GLchar infoLog[512];
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cerr << "Fragment Shader Compilation Error: " << infoLog << std::endl;
+		return 0;
+	}
+
+	GLuint program = glCreateProgram();
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
+	glLinkProgram(program);
+
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	if (!success) {
+		GLchar infoLog[512];
+		glGetProgramInfoLog(program, 512, NULL, infoLog);
+		std::cerr << "Shader Program Linking Error: " << infoLog << std::endl;
+		return 0;
+	}
+
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	return program;
+}
 
 //
 // Initialize World
@@ -20,10 +70,43 @@ bool World::Initialize(Map *map, int width, int height)
 
 	// Setup the viewport and frustum
 	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	double ratio = (double)height / (double)width;
-	glFrustum(-1.0, 1.0, -ratio, ratio, 1.0, 5000);
+
+	// Initialize shaders (replace with your own shader sources)
+	const char* vertexShaderSource = R"(
+        #version 330 core
+        layout(location = 0) in vec3 position;
+        layout(location = 1) in vec2 texCoord;
+        uniform mat4 modelview;
+        uniform mat4 projection;
+        out vec2 TexCoord;
+        void main()
+        {
+            gl_Position = projection * modelview * vec4(position, 1.0);
+            TexCoord = texCoord;
+        })";
+
+	const char* fragmentShaderSource = R"(
+        #version 330 core
+        in vec2 TexCoord;
+        out vec4 FragColor;
+        uniform sampler2D texture1;
+        void main()
+        {
+            FragColor = texture(texture1, TexCoord);
+        })";
+	shaderProgram = LoadShader(vertexShaderSource, fragmentShaderSource);
+	
+	// projection and view matrices
+	//glm::mat4 projection = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 5000.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 5000.0f);
+	
+	glUseProgram(shaderProgram);
+	GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
+	if (projectionLoc == -1) {
+		std::cerr << "Uniform 'projection' not found in shader program!" << std::endl;
+		return false;
+	}
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
 
 	// Build textures
 	if (!InitializeTextures()) {
@@ -44,16 +127,16 @@ bool World::Initialize(Map *map, int width, int height)
 void World::DrawScene(Camera *camera)
 {
 	// Clear the drawbuffer
-	glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	// Setup a viewing matrix and transformation
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(camera->head[0], camera->head[1], camera->head[2],
-			camera->head[0] + camera->view[0],
-			camera->head[1] + camera->view[1],
-			camera->head[2] + camera->view[2],
-			0, 0, 1);
+	glm::mat4 view = glm::lookAt(glm::vec3(camera->head[0], camera->head[1], camera->head[2]),
+                                 glm::vec3(camera->head[0] + camera->view[0], camera->head[1] + camera->view[1], camera->head[2] + camera->view[2]),
+                                 glm::vec3(0.0f, 0.0f, 1.0f));
+	
+	glUseProgram(shaderProgram);
+	GLint modelViewLoc = glGetUniformLocation(shaderProgram, "modelview");
+	glUniformMatrix4fv(modelViewLoc, 1, GL_FALSE, &view[0][0]);
 
 	// Find the leaf the camera is in
 	bspleaf_t *leaf = FindLeaf(camera);
@@ -69,15 +152,26 @@ void World::DrawSurface(int surface)
 {
 	// Get the surface primitive
 	primdesc_t *primitives = &surfacePrimitives[numMaxEdgesPerSurface * surface];
+	
+	// setup VAO and VBO for rendering a surface
+	GLuint VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
-	// Loop through all vertices of the primitive and draw a surface
-	glBegin(GL_POLYGON);
-	for (int i = 0; i < map->getNumEdges(surface); i++, primitives++) {
-		glTexCoord2fv(primitives->t);
-		glVertex3fv(primitives->v);
-	}
-	glEnd();
-}  
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(primdesc_t) * map->getNumEdges(surface), primitives, GL_DYNAMIC_DRAW);
+
+	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)(sizeof(float) * 2));
+	glEnableVertexAttribArray(posAttrib);
+
+	GLint texAttrib = glGetAttribLocation(shaderProgram, "texCoord");
+	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)0);
+	glEnableVertexAttribArray(texAttrib);
+
+	glDrawArrays(GL_TRIANGLE_FAN, 0, map->getNumEdges(surface));
+}
 
 //
 // Draw the visible surfaces
@@ -225,7 +319,12 @@ bool World::InitializeTextures(void)
 		// Create a new texture object
 		glBindTexture(GL_TEXTURE_2D, textureObjNames[i]);
 		// Create mipmaps from the created texture
-		gluBuild2DMipmaps(GL_TEXTURE_2D, 4, width, height, GL_RGBA, GL_UNSIGNED_BYTE, texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glGenerateMipmap(GL_TEXTURE_2D);
 
 		delete[] texture;
 	}
