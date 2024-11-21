@@ -2,6 +2,8 @@
 #define _MAP_H_
 
 #include <stdlib.h> // free
+#include <unordered_map>
+#include "glad/glad.h"
 
 #define BSP_VERSION		29
 #define MAXLIGHTMAPS	4
@@ -146,13 +148,14 @@ class Map
 private:
 	char *bsp;
 	dheader_t *header;
-
 	int LoadFile(const char *filename, void **bufferptr);
 	bool LoadPalette(const char *filename);
 	bool LoadBSP(const char *filename);
 
 public:
 	unsigned int palette[256];
+	std::unordered_map<int, GLuint> surfaceVAOs;
+	std::unordered_map<int, GLuint> surfaceVBOs;
 
 	Map() {
 		bsp = NULL;

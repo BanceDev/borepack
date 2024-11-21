@@ -24,14 +24,26 @@ private:
 
 public:
 	World() {
-        surfacePrimitives = NULL;
-        textureObjNames = NULL;
+		surfacePrimitives = NULL;
+		textureObjNames = NULL;
 		visibleSurfaces = NULL;
-    }
+	}
 	~World() {
 		if (surfacePrimitives) delete[] surfacePrimitives;
 		if (textureObjNames) delete[] textureObjNames;
 		if (visibleSurfaces) delete[] visibleSurfaces;
+		for (auto &pair : map->surfaceVAOs) {
+			GLuint VAO = pair.second;
+			if (VAO != 0) {
+				glDeleteVertexArrays(1, &VAO);
+			}
+		}
+		for (auto &pair : map->surfaceVBOs) {
+			GLuint VBO = pair.second;
+			if (VBO != 0) {
+				glDeleteBuffers(1, &VBO);
+			}
+		}
 	}
 
 	bool Initialize(Map *map, int width, int height);

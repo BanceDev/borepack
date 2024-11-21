@@ -97,8 +97,7 @@ bool World::Initialize(Map *map, int width, int height)
 	shaderProgram = LoadShader(vertexShaderSource, fragmentShaderSource);
 	
 	// projection and view matrices
-	//glm::mat4 projection = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 5000.0f);
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 5000.0f);
+	glm::mat4 projection = glm::frustum(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 5000.0f);
 	
 	glUseProgram(shaderProgram);
 	GLint projectionLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -150,27 +149,15 @@ void World::DrawScene(Camera *camera)
 //
 void World::DrawSurface(int surface)
 {
-	// Get the surface primitive
-	primdesc_t *primitives = &surfacePrimitives[numMaxEdgesPerSurface * surface];
-	
-	// setup VAO and VBO for rendering a surface
-	GLuint VAO, VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(primdesc_t) * map->getNumEdges(surface), primitives, GL_DYNAMIC_DRAW);
-
-	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
-	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)(sizeof(float) * 2));
-	glEnableVertexAttribArray(posAttrib);
-
-	GLint texAttrib = glGetAttribLocation(shaderProgram, "texCoord");
-	glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)0);
-	glEnableVertexAttribArray(texAttrib);
-
-	glDrawArrays(GL_TRIANGLE_FAN, 0, map->getNumEdges(surface));
+	auto it = map->surfaceVAOs.find(surface);
+	if (it != map->surfaceVAOs.end()) {
+		GLuint VAO = it->second;
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLE_FAN, 0, map->getNumEdges(surface));
+		glBindVertexArray(0);
+	} else {
+		std::cerr << "Error: VAO not found for surface " << surface << std::endl;
+	}
 }
 
 //
@@ -380,6 +367,33 @@ bool World::InitializeSurfaces(void)
 			primitives->t[0] = (CalculateDistance(textureInfo->snrm, primitives->v) + textureInfo->soff) / mipTexture->width;
 			primitives->t[1] = (CalculateDistance(textureInfo->tnrm, primitives->v) + textureInfo->toff) / mipTexture->height;
 		}
+	}
+
+	for (int i = 0; i < map->getNumSurfaces(); i++) {
+		primdesc_t *primitives = &surfacePrimitives[numMaxEdgesPerSurface * i];
+		// setup VAO and VBO for rendering a surface
+		GLuint VAO, VBO;
+		glGenVertexArrays(1, &VAO);
+		glGenBuffers(1, &VBO);
+
+		glBindVertexArray(VAO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(primdesc_t) * map->getNumEdges(i), primitives, GL_DYNAMIC_DRAW);
+
+		GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
+		glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)(sizeof(float) * 2));
+		glEnableVertexAttribArray(posAttrib);
+
+		GLint texAttrib = glGetAttribLocation(shaderProgram, "texCoord");
+		glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(primdesc_t), (void*)0);
+		glEnableVertexAttribArray(texAttrib);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		map->surfaceVAOs[i] = VAO;
+		map->surfaceVBOs[i] = VBO;
+
 	}
 
 	return true;
