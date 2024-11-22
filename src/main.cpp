@@ -2,14 +2,10 @@
 #include "glad/glad.h"
 #include "glm.hpp"
 
-#include <stdio.h>
-#include <vector>
-#include <time.h>
-
-#include "renderer.h"
-#include "bsp.h"
+#include "shader.h"
 #include "map.h"
 #include "input.h"
+#include "camera.h"
 
 #define VIDEO_WIDTH 1920
 #define VIDEO_HEIGHT 1080
@@ -18,18 +14,18 @@ static SDL_Window *window;
 static SDL_GLContext context;
 static camera cam;
 
-int SDL_main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     SDL_Init(SDL_INIT_VIDEO);
-    
+
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
     window = SDL_CreateWindow(
-        "Harm",
+        "borepack",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
         VIDEO_WIDTH, VIDEO_HEIGHT,
         SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
-    
+
     context = SDL_GL_CreateContext(window);
     gladLoadGL();
 
@@ -40,16 +36,13 @@ int SDL_main(int argc, char *argv[])
     SDL_ShowWindow(window);
     SDL_GL_SetSwapInterval(0);
 
-    // Init resources
-    LoadShader("shaders/surface.glsl", "SurfaceShader");
-    LoadShader("shaders/sky.glsl", "SkyShader");
-    LoadShader("shaders/gui.glsl", "GuiShader");
-    LoadShader("shaders/debug.glsl", "DebugShader");
+    // init shaders
+    loadShader("shaders/surface.glsl", "SurfaceShader");
+    loadShader("shaders/sky.glsl", "SkyShader");
 
-    input Input = {};
+    input in = {};
 
-    float AspectRatio = (float)VIDEO_WIDTH / VIDEO_HEIGHT;
-    cam = createCamera(90.0f, AspectRatio, 0.1f, 65536.0f);
+    cam = createCamera(90.0f, 1.78f, 4.0f, 4096.0f);
     cam.speed = 320.0f;
     cam.pos.x = 535.0f;
     cam.pos.y = 86.0f;
@@ -58,84 +51,56 @@ int SDL_main(int argc, char *argv[])
 
     loadMap(argv[1]);
 
-    uint32_t Indices[128] = {};
-    u64 OldTime = SDL_GetPerformanceCounter();
-    f32 Time = 0.0f;
+    uint64_t old_time = SDL_GetPerformanceCounter();
+    float time = 0.0f;
 
     glCullFace(GL_BACK);
     glFrontFace(GL_CW);
     glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-    
-    b32 Running = 1;
-    while (Running)
-    {
+
+    int running = 1;
+    while (running) {
         SDL_Event event;
 
-        Input.MousePositionXRel = 0;
-        Input.MousePositionYRel = 0;
-        
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-            {
-                Running = false;
+        in.mouseXRel = 0;
+        in.mouseYRel = 0;
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT) {
+                running = false;
                 break;
-            }
-            else if (event.type == SDL_KEYDOWN)
-            {
-                if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
-                {
-                    Running = false;
+            } else if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
+                    running = false;
                     break;
                 }
-                Input.Keyboard[event.key.keysym.scancode] = 1;
-            }
-            else if (event.type == SDL_KEYUP)
-            {
-                Input.Keyboard[event.key.keysym.scancode] = 0;
-
-                if (event.key.keysym.scancode == SDL_SCANCODE_F5)
-                {
-                }
-            }
-            else if (event.type == SDL_MOUSEMOTION)
-            {
-                Input.MousePositionX = event.motion.x;
-                Input.MousePositionY = event.motion.y;
-                Input.MousePositionXRel = event.motion.xrel;
-                Input.MousePositionYRel = event.motion.yrel;
+                in.keyboard[event.key.keysym.scancode] = 1;
+            } else if (event.type == SDL_KEYUP) {
+                in.keyboard[event.key.keysym.scancode] = 0;
+            } else if (event.type == SDL_MOUSEMOTION) {
+                in.mouseX = event.motion.x;
+                in.mouseY = event.motion.y;
+                in.mouseXRel = event.motion.xrel;
+                in.mouseYRel = event.motion.yrel;
             }
         }
 
-        u64 Elapsed = SDL_GetPerformanceCounter() - OldTime;
-        f32 DeltaTime = (f32)Elapsed / SDL_GetPerformanceFrequency();
-        u32 FramesPerSecond = (s32)(1.0f / DeltaTime);
-        OldTime = SDL_GetPerformanceCounter();
-        Time += DeltaTime;
+        uint64_t elapsed = SDL_GetPerformanceCounter() - old_time;
+        float delta_time = (float)elapsed / SDL_GetPerformanceFrequency();
+        old_time = SDL_GetPerformanceCounter();
+        time += delta_time;
 
-        CameraHandleUserInput(&Camera, &Input, DeltaTime);
-
-        GuiBegin();
-
-        GuiDrawText(8, 8,  "MS %3d", (s32)(DeltaTime * 1000.0f));
-        GuiDrawText(8, 32, "FPS %d", (s32)(1.0f / DeltaTime));
-
-        u64 FrameTime = SDL_GetPerformanceCounter();
+        cameraHandleUserInput(&cam, &in, delta_time);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                
-        DrawMap(Time);
 
-        s32 FrameTimeDelta = SDL_GetPerformanceCounter() - FrameTime;
-        f32 RenderTimeMS = ((f32)FrameTimeDelta / SDL_GetPerformanceFrequency()) * 1000.0f;
+        drawMap(time, &cam);
 
-        GuiEnd();
-
-        SDL_GL_SwapWindow(Window);
+        SDL_GL_SwapWindow(window);
     }
 
-    SDL_DestroyWindow(Window);
-    SDL_GL_DeleteContext(Context);
+    SDL_DestroyWindow(window);
+    SDL_GL_DeleteContext(context);
     SDL_Quit();
     return 0;
 }

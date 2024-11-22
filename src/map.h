@@ -4,6 +4,7 @@
 #include "fwd.hpp"
 #include "glad/glad.h"
 #include "glm.hpp"
+#include "camera.h"
 
 #define MAP_MAX_SKY_TEXTURES 8
 
@@ -47,6 +48,9 @@ struct map {
     GLuint program;
     GLuint *textures;
     GLuint lightmap_tex;
+    
+    int num_materials;
+    material *materials;
 
     int32_t num_surfaces;
     surface *surfaces;
@@ -70,7 +74,7 @@ struct map {
     bsp_clip_node *clipnodes;
 
     int32_t num_leafs;
-    bsp_leaf leafs;
+    bsp_leaf *leafs;
 
     int32_t num_mark_surfaces;
     uint16_t *mark_surfaces;
@@ -89,3 +93,24 @@ struct map {
     bsp_miptex_lump *miptex_lump;
     bsp_miptex *miptex;
 };
+
+
+
+bool allocBlock(int width, int height, int *x, int *y);
+void *loadBinaryFile(const char *filename);
+uint32_t buildTexture(uint8_t *miptex_data, int width, int height, int offset, int pitch, color *palette, GLenum filter, color *pixel_buffer);
+
+template <typename T>
+void copyLump(bsp_header *header, int lump_type, T **out_items, int *out_num_items);
+void mapInitBSP(bsp_header *header);
+void mapInitMaterials();
+void mapInitTextures();
+void calcSurfaceExtents(surface *surf);
+void markSurface(int leaf_idx);
+void buildBSPTree(bsp_node node);
+void createSurfaces();
+int getVertexFromEdge(int surf_edge);
+void triangulateSurface(surface *surf, uint32_t *triangle);
+void mapInitMeshes();
+void loadMap(const char *filename);
+void drawMap(float time, camera *cam);

@@ -1,5 +1,6 @@
 #pragma once
 #include "glm.hpp"
+#include "glad/glad.h"
 
 #define MATERIAL_MAX_UNIFORMS 8
 #define MATERIAL_MAX_TEXTURES 4
@@ -63,3 +64,12 @@ struct material {
     int32_t cull_face;
     int32_t blending;
 };
+
+bool pointInsideViewFrustum(glm::vec3 point, const glm::mat4 &mvp);
+int aabbInsideViewFrustum(aabb bbox, const glm::mat4 &mvp);
+mesh createMesh(const vertex *verts, int num_verts, const uint32_t *index_data, int num_idx);
+GLuint createTexture(const void *data, int width, int height, GLenum format, GLenum filter, GLenum wrap, int gen_mipmap = 0);
+void updateTexture(uint32_t tex, int xoff, int yoff, int width, int height, int format, const void *pixels);
+GLuint openGLCreateShaderProgram(const char *vert, const char *frag);
+void meshDraw(mesh m);
+void meshDrawIndexed(mesh m, int num_idx, uint64_t offset);

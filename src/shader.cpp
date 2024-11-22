@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include "glm.hpp"
+#include "renderer.h"
 
 #define SHADER_STORAGE_MAX 32
 
