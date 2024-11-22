@@ -38,7 +38,7 @@ defines({ "WINDOWS" })
 buildoptions({ "/std:c++20" })
 links({ "opengl32.lib", "SDL2.lib", "SDL2main.lib" })
 includedirs({ "deps/SDL2/include", "src" })
-libdirs({ "deps/SDL2/lib" })
+libdirs({ "deps/SDL2/lib/x64" })
 
 -- Reset filters to avoid affecting other projects
 filter({})
