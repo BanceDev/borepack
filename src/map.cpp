@@ -23,7 +23,7 @@ static int allocated[LIGHTMAP_WIDTH];
 
 bool allocBlock(int width, int height, int *x, int *y) {
     int best = LIGHTMAP_HEIGHT;
-    
+
     for (int i = 0; i < LIGHTMAP_WIDTH - width; i++) {
         int best2 = 0;
         int j;
@@ -169,12 +169,12 @@ void calcSurfaceExtents(surface *surf) {
 
         double u = (double)pos.x * (double)texinfo.uaxis.x + 
                    (double)pos.y * (double)texinfo.uaxis.y +
-                   (double)pos.x * (double)texinfo.uaxis.z +
+                   (double)pos.z * (double)texinfo.uaxis.z +
                    (double)texinfo.uoffset;
 
         double v = (double)pos.x * (double)texinfo.vaxis.x + 
                    (double)pos.y * (double)texinfo.vaxis.y +
-                   (double)pos.x * (double)texinfo.vaxis.z +
+                   (double)pos.z * (double)texinfo.vaxis.z +
                    (double)texinfo.voffset;
 
         if (uv_min.s > u) uv_min.s = (float)u;
@@ -284,8 +284,8 @@ void mapInitMeshes() {
     uint64_t num_vertex_buffers = (uint64_t)loaded_map.miptex_lump->miptex_count;
 
     vertex **vertex_buffers = (vertex **)malloc(sizeof(vertex *) * num_vertex_buffers);
-    for (int i = 0; i < num_vertex_buffers; i++) {
-        vertex_buffers[i] = (vertex *)malloc(sizeof(vertex *) * max_vertex_buffer_size);
+    for (uint64_t i = 0; i < num_vertex_buffers; i++) {
+        vertex_buffers[i] = (vertex *)malloc(sizeof(vertex) * max_vertex_buffer_size);
     }
 
     int *vertex_buffers_num_vertices = (int *)malloc(sizeof(int) * num_vertex_buffers);
@@ -337,7 +337,7 @@ void mapInitMeshes() {
 
             float t = glm::dot(pos, texinfo.vaxis) + texinfo.voffset;
             t -= (float)surf->tex_mins.t;
-            t += (float)surf->lightmap_offset.y * 16;
+            t += (float)surf->lightmap_offset.x * 16;
             t += 8;
             t /= (float)(LIGHTMAP_HEIGHT * 16);
 
@@ -354,7 +354,7 @@ void mapInitMeshes() {
     loaded_map.num_meshes = num_vertex_buffers;
     loaded_map.meshes = (mesh *)malloc(sizeof(mesh) * loaded_map.num_meshes);
 
-    for (int i = 0; i < num_vertex_buffers; i++) {
+    for (uint64_t i = 0; i < num_vertex_buffers; i++) {
         loaded_map.meshes[i] = createMesh(vertex_buffers[i], vertex_buffers_num_vertices[i], 0, 0);
         loaded_map.meshes[i].topology = GL_TRIANGLES;
         loaded_map.meshes[i].material_index = i;
@@ -363,10 +363,11 @@ void mapInitMeshes() {
     }
 
     free(vertex_buffers_num_vertices);
-    for (int i = 0; i < num_vertex_buffers; i++) {
+    for (uint64_t i = 0; i < num_vertex_buffers; i++) {
         free(vertex_buffers[i]);
     }
     free(vertex_buffers);
+    free(indices);
 }
 
 void loadMap(const char *filename) {
