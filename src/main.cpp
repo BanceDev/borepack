@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
     // init shaders
     loadShader("shaders/surface.glsl", "SurfaceShader");
     loadShader("shaders/sky.glsl", "SkyShader");
+    loadShader("shaders/water.glsl", "WaterShader");
 
     input in = {};
 

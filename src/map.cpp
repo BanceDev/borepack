@@ -7,6 +7,7 @@
 #include "shader.h"
 #include <cstring>
 #include <fstream>
+#include <iostream>
 
 #define loadBSP(filename) ((bsp_header *)loadBinaryFile(filename))
 
@@ -129,12 +130,10 @@ void mapInitTextures() {
 
         int tex_width = miptex->width;
         int tex_height = miptex->height;
-        // TODO: find out why some new maps get wild tex values for now this clamping works
-        if (tex_width > 256) tex_width = 256;
-        if (tex_height > 256) tex_height = 256;
         uint8_t *mip_data = (uint8_t *)miptex + miptex->offsets[0];
-
-        if (strncmp(miptex->name, "sky", 3) == 0) {
+        if (strcmp(miptex->name, "") == 0) {
+            std::cout << "nameless tex" << std::endl;
+        } else if (strncmp(miptex->name, "sky", 3) == 0) {
             mat->program = getShader("SkyShader");
             mat->depth_test = true;
             int sky_tex_width = tex_width >> 1;
@@ -144,6 +143,12 @@ void mapInitTextures() {
             materialSetVec3(mat, "CameraPosition", glm::vec3(0.0f));
             materialSetTexture(mat, "Texture0", fg_tex);
             materialSetTexture(mat, "Texture2", bg_tex);
+        } else if (miptex->name[0] == '*') {
+            mat->program = getShader("WaterShader");
+            mat->depth_test = true;
+            uint32_t tex = buildTexture(mip_data, tex_width, tex_height, 0, tex_width, palette, GL_LINEAR, pixel_buffer);
+            materialSetTexture(mat, "Texture0", tex);
+            materialSetFloat(mat, "Time", 0.0f);
         } else {
             uint32_t tex = buildTexture(mip_data, tex_width, tex_height, 0, tex_width, palette, GL_LINEAR, pixel_buffer);
             mat->program = getShader("SurfaceShader");
@@ -317,7 +322,7 @@ void mapInitMeshes() {
                 uint32_t image_idx = (x + surf->lightmap_offset.x) + (y + surf->lightmap_offset.y) * LIGHTMAP_WIDTH;
 
                 if (face.light_offset == -1) {
-                    lightmap_bitmap[image_idx] = 255;
+                    lightmap_bitmap[image_idx] = 28;
                 } else {
                     lightmap_bitmap[image_idx] = pixel;
                 }
