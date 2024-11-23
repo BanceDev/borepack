@@ -337,7 +337,7 @@ void mapInitMeshes() {
 
             float t = glm::dot(pos, texinfo.vaxis) + texinfo.voffset;
             t -= (float)surf->tex_mins.t;
-            t += (float)surf->lightmap_offset.x * 16;
+            t += (float)surf->lightmap_offset.y * 16;
             t += 8;
             t /= (float)(LIGHTMAP_HEIGHT * 16);
 
