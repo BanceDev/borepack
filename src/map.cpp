@@ -129,6 +129,9 @@ void mapInitTextures() {
 
         int tex_width = miptex->width;
         int tex_height = miptex->height;
+        // TODO: find out why some new maps get wild tex values for now this clamping works
+        if (tex_width > 256) tex_width = 256;
+        if (tex_height > 256) tex_height = 256;
         uint8_t *mip_data = (uint8_t *)miptex + miptex->offsets[0];
 
         if (strncmp(miptex->name, "sky", 3) == 0) {
