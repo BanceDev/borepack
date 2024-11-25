@@ -1,6 +1,5 @@
 #pragma once
 #include "glm.hpp"
-#include "input.h"
 
 struct camera {
     float speed;
@@ -18,4 +17,3 @@ glm::vec3 getForwardVector(glm::vec3 rotation);
 glm::vec3 getRightVector(glm::vec3 rotation);
 camera createCamera(float Fov, float Aspect, float Near, float Far);
 glm::mat4 cameraGetViewMatrix(camera *camera);
-void cameraHandleUserInput(camera *camera, input *in, float dt);

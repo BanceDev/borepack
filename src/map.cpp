@@ -86,6 +86,7 @@ void copyLump(bsp_header *header, int lump_type, T **out_items, int *out_num_ite
 }
 
 void mapInitBSP(bsp_header *header) {
+    copyLump(header, BSP_LUMP_ENTITIES, &loaded_map.ents, 0);
     copyLump(header, BSP_LUMP_PLANES, &loaded_map.planes, &loaded_map.num_planes);
     copyLump(header, BSP_LUMP_VERTICES, &loaded_map.vertices, &loaded_map.num_vertices);
     copyLump(header, BSP_LUMP_NODES, &loaded_map.nodes, &loaded_map.num_nodes);
@@ -408,4 +409,8 @@ void drawMap(float time, camera *cam) {
         glUniformMatrix4fv(glGetUniformLocation(mat->program, "ModelMatrix"), 1, GL_FALSE, glm::value_ptr(quake_transform_mtx));
         meshDraw(m);
     }
+}
+
+char *getEntities() {
+    return loaded_map.ents;
 }

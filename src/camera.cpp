@@ -32,19 +32,3 @@ glm::mat4 cameraGetViewMatrix(camera *camera) {
     glm::mat4 result = glm::lookAt(camera->pos, target, global_up_vec);
     return result;
 }
-
-void cameraHandleUserInput(camera *camera, input *in, float dt) {
-    float speed = camera->speed;
-    float sens = 70.0f;
-    if (in->keyboard[SDL_SCANCODE_LSHIFT]) speed *= 2.0f;
-    if (in->keyboard[SDL_SCANCODE_W]) camera->pos += getForwardVector(camera->rotation) * speed * dt;
-    if (in->keyboard[SDL_SCANCODE_S]) camera->pos -= getForwardVector(camera->rotation) * speed * dt;
-    if (in->keyboard[SDL_SCANCODE_A]) camera->pos += getRightVector(camera->rotation) * speed * dt;
-    if (in->keyboard[SDL_SCANCODE_D]) camera->pos -= getRightVector(camera->rotation) * speed * dt;
-    if (in->keyboard[SDL_SCANCODE_E]) camera->pos += global_up_vec * speed * dt;
-    if (in->keyboard[SDL_SCANCODE_Q]) camera->pos -= global_up_vec * speed * dt;
-    camera->rotation.x += (float)in->mouseYRel * sens * dt;
-    camera->rotation.y -= (float)in->mouseXRel * sens * dt;
-
-    camera->rotation.x = glm::clamp(camera->rotation.x, -89.0f, 89.0f);
-}

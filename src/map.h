@@ -48,7 +48,9 @@ struct map {
     GLuint program;
     GLuint *textures;
     GLuint lightmap_tex;
-    
+
+    char *ents;
+
     int num_materials;
     material *materials;
 
@@ -114,3 +116,4 @@ void triangulateSurface(surface *surf, uint32_t *triangle);
 void mapInitMeshes();
 void loadMap(const char *filename);
 void drawMap(float time, camera *cam);
+char *getEntities();

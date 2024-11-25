@@ -4,15 +4,17 @@
 
 #include "shader.h"
 #include "map.h"
-#include "input.h"
 #include "camera.h"
+#include "player.h"
 
 #define VIDEO_WIDTH 1920
 #define VIDEO_HEIGHT 1080
 
 static SDL_Window *window;
 static SDL_GLContext context;
-static camera cam;
+
+// NOTE: this is hella temporary, need to define an entity heirarchy probably
+static Player player;
 
 int main(int argc, char *argv[])
 {
@@ -43,14 +45,16 @@ int main(int argc, char *argv[])
 
     input in = {};
 
-    cam = createCamera(90.0f, 1.78f, 4.0f, 4096.0f);
-    cam.speed = 320.0f;
-    cam.pos.x = 535.0f;
-    cam.pos.y = 86.0f;
-    cam.pos.z = -256.0f;
-    cam.rotation.y = 180.0f;
+    player.cam = createCamera(90.0f, 1.78f, 4.0f, 4096.0f);
+    player.cam.speed = 320.0f;
+    player.cam.pos.x = 0;
+    player.cam.pos.y = 0;
+    player.cam.pos.z = 0;
+    player.cam.rotation.y = 180.0f;
 
     loadMap(argv[1]);
+
+    player.spawn();
 
     uint64_t old_time = SDL_GetPerformanceCounter();
     float time = 0.0f;
@@ -91,11 +95,12 @@ int main(int argc, char *argv[])
         old_time = SDL_GetPerformanceCounter();
         time += delta_time;
 
-        cameraHandleUserInput(&cam, &in, delta_time);
+        player.handleInput(&in, delta_time);
+        player.update(delta_time);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawMap(time, &cam);
+        drawMap(time, &player.cam);
 
         SDL_GL_SwapWindow(window);
     }
