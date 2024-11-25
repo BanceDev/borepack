@@ -26,7 +26,7 @@ public:
     void handleInput(input *in, float dt);
     void update(float dt);
 
-    camera cam;
+    Camera cam;
 
     // physics properties
     glm::vec3 vel;

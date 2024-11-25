@@ -5,6 +5,7 @@
 #include "glad/glad.h"
 #include "glm.hpp"
 #include "camera.h"
+#include "material.h"
 
 #define MAP_MAX_SKY_TEXTURES 8
 
@@ -29,12 +30,6 @@ struct sky_texture {
     GLuint background;
 };
 
-// TODO: Add water
-enum face_type {
-    FACE_SOLID,
-    FACE_SKY
-};
-
 struct render_group {
     int32_t num_faces;
     int32_t *faces;
@@ -52,7 +47,7 @@ struct map {
     char *ents;
 
     int num_materials;
-    material *materials;
+    Material *materials;
 
     int32_t num_surfaces;
     surface *surfaces;
@@ -115,5 +110,5 @@ int getVertexFromEdge(int surf_edge);
 void triangulateSurface(surface *surf, uint32_t *triangle);
 void mapInitMeshes();
 void loadMap(const char *filename);
-void drawMap(float time, camera *cam);
+void drawMap(float time, Camera &cam);
 char *getEntities();

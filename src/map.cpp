@@ -106,8 +106,8 @@ void mapInitBSP(bsp_header *header) {
 
 void mapInitMaterials() {
     int num_texs = loaded_map.miptex_lump->miptex_count;
-    material *mats = (material *)malloc(sizeof(material) * num_texs);
-    memset(mats, 0, sizeof(material) * num_texs);
+    Material *mats = (Material *)malloc(sizeof(Material) * num_texs);
+    memset(mats, 0, sizeof(Material) * num_texs);
     loaded_map.materials = mats;
     loaded_map.num_materials = num_texs;
 }
@@ -124,8 +124,8 @@ void mapInitTextures() {
     color *pixel_buffer = (color *)malloc(sizeof(color) * max_tex_width * max_tex_height);
 
     for (int i = 0; i < num_texs; i++) {
-        material *mat = &loaded_map.materials[i];
-        mat->cull_face = 1;
+        Material &mat = loaded_map.materials[i];
+        mat.cull_face = 1;
 
         bsp_miptex *miptex = (bsp_miptex *)((uint8_t *)loaded_map.miptex_lump + loaded_map.miptex_lump->data_offset[i]);
 
@@ -135,26 +135,26 @@ void mapInitTextures() {
         if (strcmp(miptex->name, "") == 0) {
             std::cout << "nameless tex" << std::endl;
         } else if (strncmp(miptex->name, "sky", 3) == 0) {
-            mat->program = getShader("SkyShader");
-            mat->depth_test = true;
+            mat.program = getShader("SkyShader");
+            mat.depth_test = true;
             int sky_tex_width = tex_width >> 1;
             uint32_t fg_tex = buildTexture(mip_data, sky_tex_width, tex_height, 0, tex_width, palette, GL_NEAREST, pixel_buffer);
             uint32_t bg_tex = buildTexture(mip_data, sky_tex_width, tex_height, sky_tex_width, tex_width, palette, GL_NEAREST, pixel_buffer);
-            materialSetFloat(mat, "Time", 0.0f);
-            materialSetVec3(mat, "CameraPosition", glm::vec3(0.0f));
-            materialSetTexture(mat, "Texture0", fg_tex);
-            materialSetTexture(mat, "Texture2", bg_tex);
+            mat.setFloat("Time", 0.0f);
+            mat.setVec3("CameraPosition", glm::vec3(0.0f));
+            mat.setTexture("Texture0", fg_tex);
+            mat.setTexture("Texture2", bg_tex);
         } else if (miptex->name[0] == '*') {
-            mat->program = getShader("WaterShader");
-            mat->depth_test = true;
+            mat.program = getShader("WaterShader");
+            mat.depth_test = true;
             uint32_t tex = buildTexture(mip_data, tex_width, tex_height, 0, tex_width, palette, GL_LINEAR, pixel_buffer);
-            materialSetTexture(mat, "Texture0", tex);
-            materialSetFloat(mat, "Time", 0.0f);
+            mat.setTexture("Texture0", tex);
+            mat.setFloat("Time", 0.0f);
         } else {
             uint32_t tex = buildTexture(mip_data, tex_width, tex_height, 0, tex_width, palette, GL_LINEAR, pixel_buffer);
-            mat->program = getShader("SurfaceShader");
-            mat->depth_test = true;
-            materialSetTexture(mat, "Texture0", tex);
+            mat.program = getShader("SurfaceShader");
+            mat.depth_test = true;
+            mat.setTexture("Texture0", tex);
         }
     }
     free(pixel_buffer);
@@ -368,7 +368,7 @@ void mapInitMeshes() {
         loaded_map.meshes[i].topology = GL_TRIANGLES;
         loaded_map.meshes[i].material_index = i;
 
-        materialSetTexture(&loaded_map.materials[i], "Texture1", loaded_map.lightmap_tex);
+        loaded_map.materials[i].setTexture("Texture1", loaded_map.lightmap_tex);
     }
 
     free(vertex_buffers_num_vertices);
@@ -387,9 +387,9 @@ void loadMap(const char *filename) {
     mapInitMeshes();
 }
 
-void drawMap(float time, camera *cam) {
-    glm::mat4 proj_mtx = cam->projection_mtx;
-    glm::mat4 view_mtx = cameraGetViewMatrix(cam);
+void drawMap(float time, Camera &cam) {
+    glm::mat4 proj_mtx = cam.projection_mtx;
+    glm::mat4 view_mtx = cam.getViewMatrix();
     glm::mat4 quake_transform_mtx = glm::mat4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f,-1.0f, 0.0f,
@@ -400,13 +400,13 @@ void drawMap(float time, camera *cam) {
     for (int i = 0; i < loaded_map.num_meshes; i++) {
         mesh m = loaded_map.meshes[i];
         //glm::mat4 mvp = proj_mtx * view_mtx * quake_transform_mtx;
-        material *mat = &loaded_map.materials[m.material_index];
-        materialBind(*mat);
-        materialSetFloat(mat, "Time", time);
-        materialSetVec3(mat, "CameraPosition", cam->pos);
-        glUniformMatrix4fv(glGetUniformLocation(mat->program, "ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(proj_mtx));
-        glUniformMatrix4fv(glGetUniformLocation(mat->program, "ViewMatrix"), 1, GL_FALSE, glm::value_ptr(view_mtx));
-        glUniformMatrix4fv(glGetUniformLocation(mat->program, "ModelMatrix"), 1, GL_FALSE, glm::value_ptr(quake_transform_mtx));
+        Material &mat = loaded_map.materials[m.material_index];
+        mat.bind();
+        mat.setFloat("Time", time);
+        mat.setVec3("CameraPosition", cam.pos);
+        glUniformMatrix4fv(glGetUniformLocation(mat.program, "ProjectionMatrix"), 1, GL_FALSE, glm::value_ptr(proj_mtx));
+        glUniformMatrix4fv(glGetUniformLocation(mat.program, "ViewMatrix"), 1, GL_FALSE, glm::value_ptr(view_mtx));
+        glUniformMatrix4fv(glGetUniformLocation(mat.program, "ModelMatrix"), 1, GL_FALSE, glm::value_ptr(quake_transform_mtx));
         meshDraw(m);
     }
 }

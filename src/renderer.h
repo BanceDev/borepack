@@ -55,16 +55,6 @@ struct uniform {
     uniform_value val;
 };
 
-struct material {
-    uint32_t program;
-    int32_t num_uniforms;
-    uniform uniforms[MATERIAL_MAX_UNIFORMS];
-    int32_t wireframe;
-    int32_t depth_test;
-    int32_t cull_face;
-    int32_t blending;
-};
-
 bool pointInsideViewFrustum(glm::vec3 point, const glm::mat4 &mvp);
 int aabbInsideViewFrustum(aabb bbox, const glm::mat4 &mvp);
 mesh createMesh(const vertex *verts, int num_verts, const uint32_t *index_data, int num_idx);

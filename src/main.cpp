@@ -45,13 +45,6 @@ int main(int argc, char *argv[])
 
     input in = {};
 
-    player.cam = createCamera(90.0f, 1.78f, 4.0f, 4096.0f);
-    player.cam.speed = 320.0f;
-    player.cam.pos.x = 0;
-    player.cam.pos.y = 0;
-    player.cam.pos.z = 0;
-    player.cam.rotation.y = 180.0f;
-
     loadMap(argv[1]);
 
     player.spawn();
@@ -96,11 +89,11 @@ int main(int argc, char *argv[])
         time += delta_time;
 
         player.handleInput(&in, delta_time);
-        player.update(delta_time);
+        //player.update(delta_time);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawMap(time, &player.cam);
+        drawMap(time, player.cam);
 
         SDL_GL_SwapWindow(window);
     }

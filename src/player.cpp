@@ -43,52 +43,26 @@ void Player::spawn() {
     // Reset physics state
     vel = glm::vec3(0.0f);
     onGround = false;
+    cam.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
 }
 
 void Player::handleInput(input *in, float dt) {
-    glm::vec3 wishDir(0.0f);
+    float speed = cam.speed;
+    float sens = 70.0f;
+    if (in->keyboard[SDL_SCANCODE_LSHIFT]) speed *= 2.0f;
+    if (in->keyboard[SDL_SCANCODE_W]) cam.pos += cam.getForwardVector(cam.rotation) * speed * dt;
+    if (in->keyboard[SDL_SCANCODE_S]) cam.pos -= cam.getForwardVector(cam.rotation) * speed * dt;
+    if (in->keyboard[SDL_SCANCODE_A]) cam.pos += cam.getRightVector(cam.rotation) * speed * dt;
+    if (in->keyboard[SDL_SCANCODE_D]) cam.pos -= cam.getRightVector(cam.rotation) * speed * dt;
+    if (in->keyboard[SDL_SCANCODE_E]) cam.pos += global_up_vec * speed * dt;
+    if (in->keyboard[SDL_SCANCODE_Q]) cam.pos -= global_up_vec * speed * dt;
+    cam.rotation.x += (float)in->mouseYRel * sens * dt;
+    cam.rotation.y -= (float)in->mouseXRel * sens * dt;
 
-    // Forward/backward
-    if (in->keyboard[SDL_SCANCODE_W]) wishDir.x += 1.0f;
-    if (in->keyboard[SDL_SCANCODE_S]) wishDir.x -= 1.0f;
-
-    // Strafe left/right
-    if (in->keyboard[SDL_SCANCODE_D]) wishDir.y += 1.0f;
-    if (in->keyboard[SDL_SCANCODE_A]) wishDir.y -= 1.0f;
-
-    // Jump
-    if (in->keyboard[SDL_SCANCODE_SPACE] && onGround) {
-        vel.z = JUMP_FORCE;
-        onGround = false;
-    }
-
-    // Normalize wish direction
-    if (glm::length(wishDir) > 0.0f) {
-        wishDir = glm::normalize(wishDir);
-    }
-
-    // Apply movement using slide move
-    glm::vec3 finalMove = slideMove(wishDir, dt);
-    pos += finalMove;
-
-    // Update camera position to match player position
-    cam.pos = pos + glm::vec3(0, 0, bbox.max.z - 8); // Eye position slightly below top of bbox
+    cam.rotation.x = glm::clamp(cam.rotation.x, -89.0f, 89.0f);
 }
 
 void Player::update(float dt) {
-    applyFriction(dt);
-    applyGravity(dt);
-
-    glm::vec3 newPos = pos + vel * dt;
-    if (checkCollision(newPos)) {
-        slideMove(glm::normalize(vel), dt);
-    } else {
-        pos = newPos;
-    }
-
-    glm::vec3 groundCheck = pos;
-    groundCheck.z -=1.0f;
-    onGround = checkCollision(groundCheck);
 }
 
 void Player::applyFriction(float dt) {
@@ -107,27 +81,14 @@ void Player::applyFriction(float dt) {
 
 void Player::applyGravity(float dt) {
     if (!onGround) {
-        vel.z -= GRAVITY * dt;
+        //vel.y -= GRAVITY * dt;
     }
 }
 
 glm::vec3 Player::slideMove(const glm::vec3 &wishDir, float dt) {
-    glm::mat4 rotMatrix4 = glm::yawPitchRoll(cam.rotation.y, cam.rotation.x, cam.rotation.z);
-    glm::mat3 rotMatrix = glm::mat3(rotMatrix4);
+    return glm::vec3(0.0f);
+}
 
-    glm::vec3 worldWishDir = rotMatrix * wishDir;
-    glm::vec3 moveAmount = worldWishDir * (float)MOVE_SPEED * dt;
-
-    if (checkCollision(pos + moveAmount)) {
-        glm::vec3 normal = glm::vec3(0.0f);
-        float d = glm::dot(moveAmount, normal);
-        glm::vec3 slide = moveAmount - normal * d;
-
-        if (!checkCollision(pos + slide)) {
-            return slide;
-        }
-        return glm::vec3(0.0f);
-    }
-
-    return moveAmount;
+bool Player::checkCollision(const glm::vec3 &newPos) {
+    return false;
 }
