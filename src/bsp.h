@@ -19,6 +19,13 @@
 
 #define BSP_LUMP_COUNT          15
 
+#define BSP_CONTENTS_EMPTY      -1
+#define BSP_CONTENTS_SOLID      -2
+#define BSP_CONTENTS_WATER      -3
+#define BSP_CONTENTS_SLIME      -4
+#define BSP_CONTENTS_LAVA       -5
+#define BSP_CONTENTS_SKY        -6
+
 #define MIPLEVELS 4
 
 #define PLANE_X    0
@@ -67,7 +74,7 @@ struct bsp_miptex {
 
 struct bsp_plane {
     glm::vec3 normal;
-    float distance;
+    float dist;
     int32_t type;
 };
 

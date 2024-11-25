@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include "SDL_mouse.h"
 #include "glad/glad.h"
 #include "glm.hpp"
 
@@ -16,8 +17,7 @@ static SDL_GLContext context;
 // NOTE: this is hella temporary, need to define an entity heirarchy probably
 static Player player;
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
@@ -33,17 +33,17 @@ int main(int argc, char *argv[])
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    SDL_SetRelativeMouseMode(SDL_TRUE);
     SDL_SetWindowMouseGrab(window, SDL_TRUE);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    ////SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     SDL_ShowWindow(window);
     SDL_GL_SetSwapInterval(0);
-
     // init shaders
     loadShader("shaders/surface.glsl", "SurfaceShader");
     loadShader("shaders/sky.glsl", "SkyShader");
     loadShader("shaders/water.glsl", "WaterShader");
 
-    input in = {};
+    input in = {0};
 
     loadMap(argv[1]);
 
@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
             } else if (event.type == SDL_MOUSEMOTION) {
                 in.mouseX = event.motion.x;
                 in.mouseY = event.motion.y;
-                in.mouseXRel = event.motion.xrel;
-                in.mouseYRel = event.motion.yrel;
+                in.mouseXRel += event.motion.xrel;
+                in.mouseYRel += event.motion.yrel;
             }
         }
 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         time += delta_time;
 
         player.handleInput(&in, delta_time);
-        //player.update(delta_time);
+        player.update(delta_time);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

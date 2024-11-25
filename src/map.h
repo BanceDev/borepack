@@ -9,6 +9,7 @@
 
 #define MAP_MAX_SKY_TEXTURES 8
 
+
 struct color {
     uint8_t r;
     uint8_t g;
@@ -91,7 +92,7 @@ struct map {
     bsp_miptex *miptex;
 };
 
-
+extern map loaded_map;
 
 bool allocBlock(int width, int height, int *x, int *y);
 void *loadBinaryFile(const char *filename);
@@ -112,3 +113,4 @@ void mapInitMeshes();
 void loadMap(const char *filename);
 void drawMap(float time, Camera &cam);
 char *getEntities();
+int findLeaf(const glm::vec3& position);

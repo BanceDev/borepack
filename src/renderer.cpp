@@ -41,7 +41,7 @@ mesh createMesh(const vertex *verts, int num_verts, const uint32_t *index_data, 
     mesh m = {};
     m.num_verts = num_verts;
     m.topology = GL_TRIANGLE_FAN;
-    
+
     glGenVertexArrays(1, &m.VAO);
     glBindVertexArray(m.VAO);
     glGenBuffers(1, &m.VBO);

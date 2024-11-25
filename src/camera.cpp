@@ -4,7 +4,7 @@
 Camera::Camera() {
     fov = 90;
     aspect = 1.78f;
-    near = 4.0f;
+    near = 1.0f;
     far = 4096.0f;
     projection_mtx = glm::perspective(glm::radians(fov), aspect, near, far);
     speed = 320.0f;

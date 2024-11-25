@@ -11,7 +11,7 @@
 
 #define loadBSP(filename) ((bsp_header *)loadBinaryFile(filename))
 
-static map loaded_map;
+map loaded_map;
 static int num_indicies;
 static uint32_t *indices;
 static int num_render_faces;
