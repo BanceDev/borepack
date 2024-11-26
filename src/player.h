@@ -42,6 +42,6 @@ private:
     bool checkCollision(const glm::vec3 &newPos, glm::vec3 *normal);
     bool checkBSPCollision(int nodeIndex, const glm::vec3 &mins, const glm::vec3 &maxs, glm::vec3 *normal);
     float classifyBox(const bsp_plane* plane, const glm::vec3& point);
-    glm::vec3 slideMove(const glm::vec3 &wishDir, float dt);
+    glm::vec3 slideMove(const glm::vec3 &wishDir, const float mag, float dt);
     glm::vec3 computeSlide(const glm::vec3& move, const glm::vec3& normal);
 };

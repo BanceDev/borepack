@@ -34,7 +34,7 @@ void Player::spawn() {
     }
     // Set player position (feet position)
     pos.x = quake_x;        // X stays the same
-    pos.y = quake_z;        // Quake Z becomes Y in OpenGL
+    pos.y = quake_z + 2.0f;        // Quake Z becomes Y in OpenGL
     pos.z = -quake_y;       // Negative Quake Y becomes Z in OpenGL
 
     // Set camera position (eye position = player position + eye height)
@@ -90,7 +90,7 @@ void Player::handleInput(input *in, float dt) {
     }
 
     // Apply movement using slide move
-    glm::vec3 finalMove = slideMove(wishDir, dt);
+    glm::vec3 finalMove = slideMove(wishDir, MOVE_SPEED, dt);
     pos += finalMove;
 
     // Update camera position to match player position
@@ -99,68 +99,44 @@ void Player::handleInput(input *in, float dt) {
 
 
 void Player::update(float dt) {
-    // Existing friction and gravity application
     applyFriction(dt);
     applyGravity(dt);
 
-    // More robust ground check
     checkGroundStatus(dt);
 
-    // Movement and collision
     glm::vec3 newPos = pos + vel * dt;
 
-    // Multiple ground detection points for more reliable detection
     bool wouldCollide = checkCollision(newPos, nullptr);
 
     if (wouldCollide) {
-        // Handle collision response
-        slideMove(glm::normalize(vel), dt);
+        pos += slideMove(glm::normalize(vel), GRAVITY, dt);
     } else {
         pos = newPos;
     }
 }
 
 void Player::checkGroundStatus(float dt) {
-    // Multiple ground check points to improve detection
-    std::vector<glm::vec3> groundCheckPoints = {
-        pos,                                    // Center
-    };
-
     // Slightly extended ground check distance
     float groundCheckDistance = 1.5f;
 
     // Check if any of the points detect ground
     onGround = false;
-    for (const auto& checkPoint : groundCheckPoints) {
-        glm::vec3 groundCheck = checkPoint;
-        groundCheck.y -= groundCheckDistance;
+    glm::vec3 groundCheck = pos;
+    groundCheck.y -= groundCheckDistance;
 
-        if (checkCollision(groundCheck, nullptr)) {
-            onGround = true;
+    if (checkCollision(groundCheck, nullptr)) {
+        onGround = true;
 
-            // Optional: Snap to ground if very close
-            if (std::abs(pos.y - groundCheck.y) < groundCheckDistance * 0.5f) {
-                pos.y = groundCheck.y + bbox.min.y;
-                vel.y = 0.0f;
-            }
-
-            break;
+        // Optional: Snap to ground if very close
+        if (std::abs(pos.y - groundCheck.y) < groundCheckDistance * 0.5f) {
+            pos.y = groundCheck.y + bbox.min.y;
+            vel.y = 0.0f;
         }
+
     }
 
-    // Additional check to prevent rapid falling when slightly off ground
     if (!onGround) {
-        // Allow a small "coyote time" before fully falling
-        static const float COYOTE_TIME = 0.1f;  // 100ms grace period
-        static float offGroundTimer = 0.0f;
-
-        offGroundTimer += dt;
-        if (offGroundTimer > COYOTE_TIME) {
-            onGround = false;
-        }
-    } else {
-        // Reset timer when on ground
-        offGroundTimer = 0.0f;
+        onGround = false;
     }
 }
 
@@ -190,9 +166,9 @@ void Player::applyFriction(float dt) {
     vel *= (newSpeed / speed);
 }
 
-glm::vec3 Player::slideMove(const glm::vec3& wishDir, float dt) {
+glm::vec3 Player::slideMove(const glm::vec3& wishDir, const float mag, float dt) {
     // Calculate movement
-    glm::vec3 moveAmount = wishDir * (float)MOVE_SPEED * dt;
+    glm::vec3 moveAmount = wishDir * mag * dt;
 
     glm::vec3 normal = glm::vec3(0.0f);
     // Check for collision
@@ -212,22 +188,18 @@ glm::vec3 Player::slideMove(const glm::vec3& wishDir, float dt) {
 }
 
 bool Player::checkCollision(const glm::vec3& newPos, glm::vec3 *normal) {
-    // 1. Convert position to Quake coordinate system
     glm::vec3 quakePos = glm::vec3(
-        newPos.x,           // X stays same
-        -newPos.z,          // OpenGL Z becomes negative Y in Quake
-        newPos.y            // OpenGL Y becomes Z in Quake
+        newPos.x,
+        -newPos.z,
+        newPos.y
     );
 
-    // 2. Get the head node from the first model (usually worldspawn)
     bsp_model worldModel = loaded_map.models[0];
     int headNode = worldModel.head_nodes[0];
 
-    // 3. Create transformed bounding box
     glm::vec3 mins = quakePos + bbox.min;
     glm::vec3 maxs = quakePos + bbox.max;
 
-    // 4. Recursively check collision through BSP tree
     return checkBSPCollision(headNode, mins, maxs, normal);
 }
 
