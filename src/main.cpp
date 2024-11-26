@@ -88,8 +88,8 @@ int main(int argc, char *argv[]) {
         old_time = SDL_GetPerformanceCounter();
         time += delta_time;
 
-        player.handleInput(&in, delta_time);
-        player.update(delta_time);
+        //player.handleInput(&in, delta_time);
+        player.update(&in, delta_time);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

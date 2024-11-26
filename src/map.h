@@ -113,4 +113,5 @@ void mapInitMeshes();
 void loadMap(const char *filename);
 void drawMap(float time, Camera &cam);
 char *getEntities();
+void expandTreeCollisions(int nodeIndex, const glm::vec3& mins, const glm::vec3& maxs);
 int findLeaf(const glm::vec3& position);

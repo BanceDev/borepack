@@ -1,4 +1,3 @@
-#include <algorithm>
 #define GLM_ENABLE_EXPERIMENTAL
 #include "player.h"
 #include "geometric.hpp"
@@ -47,7 +46,7 @@ void Player::spawn() {
     cam.rotation = glm::vec3(0.0f, 180.0f, 0.0f);
 }
 
-void Player::handleInput(input *in, float dt) {
+glm::vec3 Player::handleInput(input *in, float dt) {
     float sens = 70.0f;
     // Clamp pitch to prevent camera from flipping
     cam.rotation.x = glm::clamp(cam.rotation.x + (float)in->mouseYRel * sens * dt, -89.0f, 89.0f);
@@ -89,30 +88,31 @@ void Player::handleInput(input *in, float dt) {
         onGround = false;
     }
 
-    // Apply movement using slide move
-    glm::vec3 finalMove = slideMove(wishDir, MOVE_SPEED, dt);
-    pos += finalMove;
-
-    // Update camera position to match player position
-    cam.pos = pos + glm::vec3(0, 22, 0); // Eye position slightly below top of bbox
+    return wishDir;
 }
 
 
-void Player::update(float dt) {
+void Player::update(input *in, float dt) {
+    // update physics state
+    glm::vec3 wishDir = handleInput(in, dt);
     applyFriction(dt);
-    applyGravity(dt);
 
+    float currentSpeed = glm::dot(vel, wishDir);
+    float add_speed = glm::clamp(MAX_SPEED - currentSpeed, 0.0f, MAX_ACCEL * dt);
+    glm::vec3 hVel = vel;
+    hVel.y = 0;
+    hVel += add_speed * wishDir;
+
+    // gravity
+    applyGravity(dt);
     checkGroundStatus(dt);
 
-    glm::vec3 newPos = pos + vel * dt;
+    vel.x = vel.z = 0;
+    vel += hVel;
+    pos += slideMove(vel, dt);
 
-    bool wouldCollide = checkCollision(newPos, nullptr);
-
-    if (wouldCollide) {
-        pos += slideMove(glm::normalize(vel), GRAVITY, dt);
-    } else {
-        pos = newPos;
-    }
+    // Update camera position to match player position
+    cam.pos = pos + glm::vec3(0, 22, 0); // Eye position slightly below top of bbox
 }
 
 void Player::checkGroundStatus(float dt) {
@@ -133,10 +133,6 @@ void Player::checkGroundStatus(float dt) {
             vel.y = 0.0f;
         }
 
-    }
-
-    if (!onGround) {
-        onGround = false;
     }
 }
 
@@ -166,11 +162,11 @@ void Player::applyFriction(float dt) {
     vel *= (newSpeed / speed);
 }
 
-glm::vec3 Player::slideMove(const glm::vec3& wishDir, const float mag, float dt) {
+glm::vec3 Player::slideMove(const glm::vec3& wishDir, float dt) {
     // Calculate movement
-    glm::vec3 moveAmount = wishDir * mag * dt;
+    glm::vec3 moveAmount = wishDir * dt;
+    glm::vec3 normal;
 
-    glm::vec3 normal = glm::vec3(0.0f);
     // Check for collision
     if (checkCollision(pos + moveAmount, &normal)) {
         // Project movement onto the collision plane
@@ -203,7 +199,7 @@ bool Player::checkCollision(const glm::vec3& newPos, glm::vec3 *normal) {
     return checkBSPCollision(headNode, mins, maxs, normal);
 }
 
-bool Player::checkBSPCollision(int nodeIndex, const glm::vec3& mins, const glm::vec3& maxs, glm::vec3 *normal) {
+bool Player::checkBSPCollision(int nodeIndex, const glm::vec3 &mins, const glm::vec3 &maxs, glm::vec3 *normal) {
     // Check if we've hit a leaf
     if (nodeIndex < 0) {
         bsp_leaf* leaf = &loaded_map.leafs[~nodeIndex];
